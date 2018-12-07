@@ -1,0 +1,79 @@
+/* Notes **/
+/*
+// Design LRU (Least Recently Used Cache)
+// Given Key and Value, define below APIs
+// SetValue(char *key, char *value)
+// GetValue(char *key)
+// DeleteValue(char *key)
+
+// Usable by multiple processes and need to be thread-safe.
+
+// Assumptions-
+1) Key and Value are char pointers (char *). 
+2) Queue size and hash table size grows dynamically. Currently, no limit on memory usage by these data structures.
+Calculations required, if memory constraint is specified. When we have capacity defined, LRU mechanism shall kick in and
+when queue shall be full and new entry needs to be added, rear node shall be evicted from the queue and from hash table too.
+3) Current design does not accomodate collisions on hash table insertion. Assumes collision free hashing key generation. 
+TODO (Next phase, enhancement)- Handle collision while storing input keys.
+
+*/
+
+** Two data structures shall be used to implement LRU -- Hash table and Queue.
+
+For Queue, below applies:
+-- Queue data structure which shall be a double linked list. 
+-- Each node shall contain the value (1B to 1MB size).
+-- Whenever an entry from the queue matches with requested entry (using GetValue()), 
+that node shall be moved to front of the queue.
+-- When an entry is added using SetValue() and queue is not full, it is just added to front of queue.
+and front ptr of the queue is updated.
+-- When an entry is added using SetValue() and queue is full (i.e.,no empty nodes), 
+last (rear) node shall be deleted from the queue. 
+Also, entry from hash table for respective value shall be removed.
+
+For hashtable, below applies:
+
+-- Every entry shall store the hashing key and reference to queue node.
+-- When SetValue() is issued, new queue node is created and inserted to front of queue.
+New entry shall be added to hash table with given key and reference of newly created queue node.
+-- When GetValue() is issued, respective key entry is looked up from hash table and queue node reference
+is used to return value for provided key.
+-- When DeleteValue() is issued, respective key entry is located in the hash table. If entry found, 
+queue node reference is used to delete that node from the queue.
+-- For DeleteValue() and SetValue() APIs, mutex lock shall be used to avoid race conditions 
+on the data structure.
+
+
+//Data structures and Pseudocode for APIs
+
+// Queue data structures
+// qnode is the entry in queue, which will point to previous and next entries. It will contain 
+// value received from the user.
+// queue_ds is the queue which contains front and rear pointers to access nodes in the queue.
+// It contains mutex lock, which will be used when any write (SetValue, DeleteValue) 
+// operation is involved for the queue.
+
+typedef struct _qnode {
+	struct _qnode *next, *prev;
+	char *val;
+}qnode;
+
+typedef struct queue_ds {
+	qnode *front, *rear;
+	pthread_t mutex;
+}queue_ds;
+
+
+// HashTable structures
+// hlist is the hash table, which will grow dynamically.
+// hentry is the individual hash table entry, which will hold incoming key and reference to queue node.
+
+typedef struct _hentry {
+	char *key;
+	qnode *hvalue;
+}hentry;
+
+typedef struct _hmap {
+	hentry *hlist;
+}hmap;
+
